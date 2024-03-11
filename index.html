@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Solver</title>
+    <style>
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            grid-template-rows: repeat(9, 40px);
+            gap: 1px;
+            border: 1px solid black;
+        }
+        .cell {
+            border: 1px solid black;
+            text-align: center;
+            line-height: 40px;
+        }
+        #solve-button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .result-sudoku {
+            margin-top: 20px;
+            border: 1px solid black;
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            grid-template-rows: repeat(9, 40px);
+            gap: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sudoku-grid" id="sudoku-grid">
+        <!-- Create input cells for Sudoku -->
+        <!-- Empty cells can have value 0 -->
+        <!-- Example: <input type="number" class="cell" min="0" max="9"> -->
+    </div>
+    <button id="solve-button">Solve Sudoku</button>
+    <div class="result-sudoku" id="result-sudoku">
+        <!-- Display result Sudoku here -->
+    </div>
+
+    <script>
+        function createSudokuCells(containerId) {
+            const container = document.getElementById(containerId);
+            for (let i = 0; i < 81; i++) {
+                const cell = document.createElement('input');
+                cell.type = 'number';
+                cell.classList.add('cell');
+                cell.min = 0;
+                cell.max = 9;
+                container.appendChild(cell);
+            }
+        }
+
+        // Create input cells for input Sudoku grid
+        createSudokuCells('sudoku-grid');
+
+        // Add event listener to the solve button
+        document.getElementById('solve-button').addEventListener('click', function() {
+            // Get input values from Sudoku cells
+            const sudokuGrid = document.getElementById('sudoku-grid');
+            const inputs = sudokuGrid.querySelectorAll('.cell');
+            const sudokuArray = [];
+            inputs.forEach(input => {
+                sudokuArray.push(parseInt(input.value) || 0);
+            });
+
+            // Post the Sudoku array to the server for solving
+            fetch('http://localhost:8080/solveSudoku', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ sudoku: sudokuArray })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update result Sudoku with returned data
+                const resultSudoku = document.getElementById('result-sudoku');
+                resultSudoku.innerHTML = '';
+                data.forEach(row => {
+                    row.forEach(cell => {
+                        const cellDiv = document.createElement('div');
+                        cellDiv.textContent = cell;
+                        cellDiv.classList.add('cell');
+                        resultSudoku.appendChild(cellDiv);
+                    });
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

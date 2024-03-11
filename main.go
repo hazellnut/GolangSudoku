@@ -1,13 +1,34 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"regexp"
+	"runtime"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
+var global_sudoku [9][9]int
+var result_sudoku [9][9]int
+
 func main() {
+	// runtime.SetCPUProfileRate((100000))
+	// f, err := os.Create("myprogram.prof")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// defer f.Close()
+	// pprof.StartCPUProfile(f)
+	// defer pprof.StopCPUProfile()
+
+	defer TimeTrack(time.Now())
+
 	// fmt.Println(quote.Go())
 
 	// var doggy Dog
@@ -16,9 +37,14 @@ func main() {
 
 	// fmt.Printf("This is a go test string, the dog's name is %s and he is so floofy: %d", doggy.Animal.name, doggy.floof_score)
 
-	// router := gin.Default()
+	router := gin.Default()
+	router.LoadHTMLFiles("index.html")
 	// router.GET("/albums", getAlbums)
-	// router.Run("localhost:8080")
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", gin.H{})
+	})
+	router.POST("/solveSudoku", postSudoku)
+	router.Run("localhost:8080")
 	example_sudoku := [9][9]int{
 		{0, 0, 0, 0, 0, 0, 9, 0, 0},
 		{0, 0, 9, 0, 4, 3, 0, 8, 0},
@@ -31,39 +57,69 @@ func main() {
 		{0, 4, 0, 1, 5, 0, 7, 2, 0}}
 
 	new_arr := solveSudoku(example_sudoku)
+
 	print_sudoku(new_arr)
 
 }
 
-type album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
+func TimeTrack(start time.Time) {
+	elapsed := time.Since(start)
+
+	// Skip this function, and fetch the PC and file for its parent.
+	pc, _, _, _ := runtime.Caller(1)
+
+	// Retrieve a function object this functions parent.
+	funcObj := runtime.FuncForPC(pc)
+
+	// Regex to extract just the function name (and not the module path).
+	runtimeFunc := regexp.MustCompile(`^.*\.(.*)$`)
+	name := runtimeFunc.ReplaceAllString(funcObj.Name(), "$1")
+
+	log.Println(fmt.Sprintf("%s took %s", name, elapsed))
 }
 
-var albums = []album{
-	{ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
-	{ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-	{ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
-}
+// type album struct {
+// 	ID     string  `json:"id"`
+// 	Title  string  `json:"title"`
+// 	Artist string  `json:"artist"`
+// 	Price  float64 `json:"price"`
+// }
 
-type Animal struct {
-	name string
-	size int
-}
+// var albums = []album{
+// 	{ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
+// 	{ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
+// 	{ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
+// }
 
-type Dog struct {
-	Animal
-	floof_score int
-}
+// type Animal struct {
+// 	name string
+// 	size int
+// }
 
-func getAlbums(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, albums)
-}
+// type Dog struct {
+// 	Animal
+// 	floof_score int
+// }
+
+// func getAlbums(c *gin.Context) {
+// 	c.IndentedJSON(http.StatusOK, albums)
+// }
 
 func postSudoku(c *gin.Context) {
-	//solveSudoku(arr)
+
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(400, err)
+		return
+	}
+	err = json.Unmarshal(body, &global_sudoku)
+
+	// if err := c.BindJSON(&global_sudoku); err != nil {
+	// 	return
+	// }
+
+	result_sudoku = solveSudoku(global_sudoku)
+	c.IndentedJSON(http.StatusOK, result_sudoku)
 }
 
 func print_sudoku(arr [9][9]int) {
