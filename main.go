@@ -20,15 +20,15 @@ func main() {
 	// router.GET("/albums", getAlbums)
 	// router.Run("localhost:8080")
 	example_sudoku := [9][9]int{
-		{1, 0, 0, 4, 8, 9, 0, 0, 6},
-		{7, 3, 0, 0, 0, 0, 0, 4, 0},
-		{0, 0, 0, 0, 0, 1, 2, 9, 5},
-		{0, 0, 7, 1, 2, 0, 6, 0, 0},
-		{5, 0, 0, 7, 0, 3, 0, 0, 8},
-		{0, 0, 6, 0, 9, 5, 7, 0, 0},
-		{9, 1, 4, 6, 0, 0, 0, 0, 0},
-		{0, 2, 0, 0, 0, 0, 0, 3, 7},
-		{8, 0, 0, 5, 1, 2, 0, 0, 4}}
+		{0, 0, 0, 0, 0, 0, 9, 0, 0},
+		{0, 0, 9, 0, 4, 3, 0, 8, 0},
+		{3, 0, 0, 7, 0, 1, 0, 0, 0},
+		{0, 0, 0, 0, 8, 0, 0, 0, 9},
+		{0, 0, 5, 0, 0, 0, 0, 6, 0},
+		{4, 6, 0, 0, 0, 0, 5, 0, 0},
+		{0, 0, 8, 6, 0, 0, 0, 4, 0},
+		{0, 5, 0, 0, 7, 0, 0, 0, 0},
+		{0, 4, 0, 1, 5, 0, 7, 2, 0}}
 
 	new_arr := solveSudoku(example_sudoku)
 	print_sudoku(new_arr)
@@ -63,7 +63,7 @@ func getAlbums(c *gin.Context) {
 }
 
 func postSudoku(c *gin.Context) {
-	solveSudoku(arr)
+	//solveSudoku(arr)
 }
 
 func print_sudoku(arr [9][9]int) {
@@ -96,7 +96,7 @@ func solveSudoku(arr [9][9]int) [9][9]int {
 
 func solveCell(arr *[9][9]int, row int, col int) bool {
 	//immediately return false if there is a clash with rows and columns
-	if !checkRowsAndColumns(arr, row, col) || (arr[row][col] == 0) {
+	if !checkCell(arr, row, col) || (arr[row][col] == 0) {
 		return false
 	}
 
@@ -118,7 +118,7 @@ func solveCell(arr *[9][9]int, row int, col int) bool {
 
 }
 
-func checkRowsAndColumns(arr *[9][9]int, row int, col int) bool {
+func checkCell(arr *[9][9]int, row int, col int) bool {
 	value := arr[row][col]
 	for i := 0; i < 9; i++ {
 		if i == row {
@@ -136,6 +136,24 @@ func checkRowsAndColumns(arr *[9][9]int, row int, col int) bool {
 			return false
 		}
 	}
+	gridcol := col / 3
+	gridrow := row / 3
+
+	//don't need to re-check columns
+	for i := 3 * gridcol; i < 3*(gridcol+1); i++ {
+		if i == col {
+			continue
+		}
+		for j := 3 * gridrow; j < 3*(gridrow+1); j++ {
+			if j == row {
+				continue
+			}
+			if arr[j][i] == value {
+				return false
+			}
+		}
+	}
+
 	return true
 
 }
