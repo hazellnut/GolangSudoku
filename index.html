@@ -47,7 +47,17 @@
     </div>
 
     <script>
+        const sudokuArray = [[]];
         function createSudokuCells(containerId) {
+            const example = [0, 0, 0, 0, 0, 0, 9, 0, 0,
+                0, 0, 9, 0, 4, 3, 0, 8, 0,
+                3, 0, 0, 7, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 8, 0, 0, 0, 9,
+                0, 0, 5, 0, 0, 0, 0, 6, 0,
+                4, 6, 0, 0, 0, 0, 5, 0, 0,
+                0, 0, 8, 6, 0, 0, 0, 4, 0,
+                0, 5, 0, 0, 7, 0, 0, 0, 0,
+                0, 4, 0, 1, 5, 0, 7, 2, 0];
             const container = document.getElementById(containerId);
             for (let i = 0; i < 81; i++) {
                 const cell = document.createElement('input');
@@ -55,8 +65,37 @@
                 cell.classList.add('cell');
                 cell.min = 0;
                 cell.max = 9;
+                cell.value = example[i];
+                if (cell.value >0)
+                {
+                    cell.style.backgroundColor = "green";
+                    cell.style.color = "white";
+                }
+                else
+                {
+                    cell.value = '';
+                }
+                cell.addEventListener('blur',function(event) {handleInputChange(cell,event);});
                 container.appendChild(cell);
+                
+
             }
+        }
+
+        function handleInputChange(cell,event)
+        {
+            if (event.target.value > 0)
+            {
+                cell.style.backgroundColor = "green";
+                cell.style.color = "white";
+            }
+            else
+            {
+                cell.value = '';
+                cell.style.backgroundColor = "white";
+                cell.style.color="black";
+            }
+            
         }
 
         // Create input cells for input Sudoku grid
@@ -67,9 +106,17 @@
             // Get input values from Sudoku cells
             const sudokuGrid = document.getElementById('sudoku-grid');
             const inputs = sudokuGrid.querySelectorAll('.cell');
-            const sudokuArray = [];
+            var i = 0;
+            var j = 0;
             inputs.forEach(input => {
-                sudokuArray.push(parseInt(input.value) || 0);
+                if (i==9)
+                {
+                    i=0
+                    j++;
+                    sudokuArray.push([]);
+                }
+                sudokuArray[j].push(parseInt(input.value) || 0);
+                i++;
             });
 
             // Post the Sudoku array to the server for solving
@@ -78,19 +125,31 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ sudoku: sudokuArray })
+                body: JSON.stringify(sudokuArray )
             })
             .then(response => response.json())
             .then(data => {
                 // Update result Sudoku with returned data
                 const resultSudoku = document.getElementById('result-sudoku');
                 resultSudoku.innerHTML = '';
+                const sudokuGrid = document.getElementById('sudoku-grid');
+                const inputs = sudokuGrid.querySelectorAll('.cell');
+                var i =0;
+                var j =0;
                 data.forEach(row => {
                     row.forEach(cell => {
                         const cellDiv = document.createElement('div');
-                        cellDiv.textContent = cell;
+                        
                         cellDiv.classList.add('cell');
+                        
+                        if (inputs[i].style.backgroundColor === "green")
+                        {
+                            cellDiv.style.backgroundColor = "green";
+                            cellDiv.style.color = "white";
+                        }
+                        cellDiv.textContent = cell;
                         resultSudoku.appendChild(cellDiv);
+                        i++;
                     });
                 });
             })
