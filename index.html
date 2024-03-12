@@ -47,7 +47,7 @@
     </div>
 
     <script>
-        const sudokuArray = [[]];
+        var sudokuArray = [[]];
         function createSudokuCells(containerId) {
             const example = [0, 0, 0, 0, 0, 0, 9, 0, 0,
                 0, 0, 9, 0, 4, 3, 0, 8, 0,
@@ -104,6 +104,7 @@
         // Add event listener to the solve button
         document.getElementById('solve-button').addEventListener('click', function() {
             // Get input values from Sudoku cells
+            sudokuArray = [[]];
             const sudokuGrid = document.getElementById('sudoku-grid');
             const inputs = sudokuGrid.querySelectorAll('.cell');
             var i = 0;
@@ -130,31 +131,60 @@
             .then(response => response.json())
             .then(data => {
                 // Update result Sudoku with returned data
-                const resultSudoku = document.getElementById('result-sudoku');
-                resultSudoku.innerHTML = '';
-                const sudokuGrid = document.getElementById('sudoku-grid');
-                const inputs = sudokuGrid.querySelectorAll('.cell');
-                var i =0;
-                var j =0;
-                data.forEach(row => {
-                    row.forEach(cell => {
-                        const cellDiv = document.createElement('div');
-                        
-                        cellDiv.classList.add('cell');
-                        
-                        if (inputs[i].style.backgroundColor === "green")
-                        {
-                            cellDiv.style.backgroundColor = "green";
-                            cellDiv.style.color = "white";
-                        }
-                        cellDiv.textContent = cell;
-                        resultSudoku.appendChild(cellDiv);
-                        i++;
-                    });
-                });
+                populateResultSudoku(data);
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => 
+            {
+                console.error('Error:', error);
+                alert("unsolvable sudoku");
+                clearResultSudoku();
+            });
         });
+
+        function populateResultSudoku(data)
+        {
+            const resultSudoku = document.getElementById('result-sudoku');
+            resultSudoku.innerHTML = '';
+            const sudokuGrid = document.getElementById('sudoku-grid');
+            const inputs = sudokuGrid.querySelectorAll('.cell');
+            var i =0;
+            var j =0;
+            data.forEach(row => {
+                row.forEach(cell => {
+                    const cellDiv = document.createElement('div');
+                    
+                    cellDiv.classList.add('cell');
+                    
+                    if (inputs[i].style.backgroundColor === "green")
+                    {
+                        cellDiv.style.backgroundColor = "green";
+                        cellDiv.style.color = "white";
+                    }
+                    cellDiv.textContent = cell;
+                    if (cellDiv.textContent === '0')
+                    {
+                        cellDiv.textContent = '';
+                    }
+                    resultSudoku.appendChild(cellDiv);
+                    i++;
+                });
+            });
+        }
+
+        function clearResultSudoku()
+        {
+            const resultSudoku = document.getElementById('result-sudoku');
+            const cells = resultSudoku.querySelectorAll('.cell');
+            cells.forEach(cell=>
+            {
+                cell.textContent = '';
+                cell.style.backgroundColor = "white";
+                cell.style.color = "black";
+            })
+        }
+
+
+
     </script>
 </body>
 </html>

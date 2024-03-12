@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -50,8 +51,12 @@ func test_1() {
 		{0, 5, 0, 0, 7, 0, 0, 0, 0},
 		{0, 4, 0, 1, 5, 0, 7, 2, 0}}
 
-	new_arr := solveSudoku(example_sudoku)
-	print_sudoku(new_arr)
+	new_arr, err := solveSudoku(example_sudoku)
+	if !(err == nil) {
+		print_sudoku(new_arr)
+		return
+	}
+	print("Error! Sudoku unsolvable!")
 }
 
 func TimeTrack(start time.Time) {
@@ -83,7 +88,10 @@ func postSudoku(c *gin.Context) {
 	// 	return
 	// }
 
-	result_sudoku = solveSudoku(global_sudoku)
+	result_sudoku, err = solveSudoku(global_sudoku)
+	if !(err == nil) {
+		c.IndentedJSON(http.StatusInternalServerError, nil)
+	}
 	c.IndentedJSON(http.StatusOK, result_sudoku)
 }
 
@@ -98,7 +106,7 @@ func print_sudoku(arr [9][9]int) {
 	fmt.Printf(str)
 }
 
-func solveSudoku(arr [9][9]int) [9][9]int {
+func solveSudoku(arr [9][9]int) ([9][9]int, error) {
 	//logic for solving sudoku:
 	//take the first input cell that is empty (i.e. 0) and test from 1 to 9
 	//if the value is valid, test the next empty cell
@@ -108,11 +116,11 @@ func solveSudoku(arr [9][9]int) [9][9]int {
 	for i := 1; i <= 9; i++ {
 		arr[r0][c0] = i
 		if solveCell(&arr, 0, 0) {
-			return arr
+			return arr, nil
 		}
 	}
 
-	return arr
+	return arr, errors.New("unsolvable")
 }
 
 func solveCell(arr *[9][9]int, row int, col int) bool {
